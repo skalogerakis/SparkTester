@@ -2,16 +2,12 @@ package mainTestPackage
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.OutputMode
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructType, TimestampType}
+import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructType, TimestampType}
+import org.apache.spark.sql.functions._
 
-object StructuredStreaming {
-  //https://www.youtube.com/watch?v=xYN5RCTRdBM&list=PLlL9SaZVnVghotdcsx1Wvm0jNgxpVXZaG&index=3
+object StreamingAggr {
   //This is how main class is defined in scala
   def main(args: Array[String]): Unit = {
-    /*
-      Basic Recap: MUST SPECIFY 1. Source 2. Schema 3. Sink
-     */
-
     //This is how structured streaming starts, by building a spark session
     val sparkSession = SparkSession.builder().appName("Spark Structured Streaming").master("local[*]").getOrCreate()
 
@@ -26,25 +22,33 @@ object StructuredStreaming {
       .add("StockCode", IntegerType)
       .add("Description", StringType)
       .add("Quantity", IntegerType)
-      .add("InvoiceDate", TimestampType)
+      .add("InvoiceDate", DateType)
       .add("UnitPrice", DoubleType)
       .add("CustomerId", IntegerType)
       .add("Country", StringType)
       .add("InvoiceTimestamp", TimestampType)
 
     //readStream is a mechanism of reading a particular directory in streaming fashion
-    val streamingData = sparkSession.readStream.schema(retailDataSchmema)
+    val streamingData = sparkSession.readStream
+      .schema(retailDataSchmema)
+      .option("maxFilesPerTrigger","2")  // This option simply makes spark to read up to 2 files per batch
       .csv("/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData")  //Specify directory of file to read
 
-    val filteredData = streamingData.filter("Country = 'United Kingdom'")
+    //This is where we apply our aggregations. TODO read whole Spark Scala API and search functions to check all available aggregations
+    val aggr = streamingData
+        .filter("Quantity > 10")
+        .groupBy("InvoiceDate", "Country")
+        .agg(sum("UnitPrice"))
 
-    //writeStream specify the output sink of the stream
-    val query = filteredData.writeStream.format("console")
-      .queryName("filterByCountry")
-      .outputMode(OutputMode.Update())  // Available are Complete, Append, Update
-      .start()
+    val aggrQuery = aggr.writeStream
+        .format("console")
+        .outputMode(OutputMode.Complete())
+        .start()
 
-    //wait untill this job is terminated
-    query.awaitTermination()
+
+    aggrQuery.awaitTermination()
+
+
   }
+
 }
