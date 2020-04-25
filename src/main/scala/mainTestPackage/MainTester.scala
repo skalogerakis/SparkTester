@@ -14,7 +14,7 @@ object MainTester {
       .getOrCreate()
 
     //LogManager.getRootLogger.setLevel(Level.ERROR)
-    spark.sparkContext.setLogLevel("Error")
+    //spark.sparkContext.setLogLevel("Error")
 
     import spark.implicits._
 
