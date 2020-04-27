@@ -29,6 +29,7 @@ object StreamingAggr {
       .add("InvoiceTimestamp", TimestampType)
 
     //readStream is a mechanism of reading a particular directory in streaming fashion
+    //There is also a header option while reading with true false options
     val streamingData = sparkSession.readStream
       .schema(retailDataSchmema)
       .option("maxFilesPerTrigger","2")  // This option simply makes spark to read up to 2 files per batch
@@ -38,11 +39,19 @@ object StreamingAggr {
     val aggr = streamingData
         .filter("Quantity > 10")
         .groupBy("InvoiceDate", "Country")
-        .agg(sum("UnitPrice"))
+        .agg(avg("UnitPrice"))
 
+    /**
+     * Whenever there is checkpoint directory attached to the query, spark goes through the content of the
+     * directory before it accepts new data. This makes sure that spark revovers the old state before it starts
+     * processing new data. So whenever there is restart, spark first recovers the old state and then start processing new data from the stream.
+     */
     val aggrQuery = aggr.writeStream
+        .queryName("AggrExample")
         .format("console")
+        //.option("path", "/home/skalogerakis/TUC_Projects/SparkTest/Output") //TODO add this when added in real file
         .outputMode(OutputMode.Complete())
+        .option("checkpointLocation", "/home/skalogerakis/TUC_Projects/SparkTest/Checkpoint/")
         .start()
 
 
