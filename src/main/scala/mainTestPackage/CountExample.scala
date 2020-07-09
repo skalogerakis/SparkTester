@@ -12,10 +12,14 @@ object CountExample {
     //This is how structured streaming starts, by building a spark session
     val sparkSession = SparkSession.builder().appName("Spark Structured Streaming").master("local[*]").getOrCreate()
 
+    //sparkSession.conf.set("spark.sql.streaming.metricsEnabled", "true")
+
     //This hides too much log information and sets log level to error
     sparkSession.sparkContext.setLogLevel("ERROR")
 
     MonitorListener(sparkSession)
+
+    
 
     //We must add the schema of the file we are going to use
     //We need to explicitly inform spark this is the schema we should be looking for
@@ -43,6 +47,8 @@ object CountExample {
       .groupBy("Country")
       .count()
 
+    //countTest.explain()
+
     val countQuery = countTest.writeStream
       .format("console")
       .outputMode("complete")
@@ -50,6 +56,7 @@ object CountExample {
       .queryName("CountExample")
       .start()
 
+    countQuery.status
     countQuery.awaitTermination()
 
   }

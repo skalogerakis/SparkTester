@@ -1,5 +1,7 @@
 package mainTestPackage
 
+import net.heartsavior.spark.sql.state.StateInformationInCheckpoint
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery, StreamingQueryListener, Trigger}
 import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructType, TimestampType}
@@ -12,7 +14,10 @@ object AggrExample {
     //This is how structured streaming starts, by building a spark session
     val sparkSession = SparkSession.builder().appName("Spark Structured Streaming").master("local[*]").getOrCreate()
 
+//    val stateInfo = new StateInformationInCheckpoint(sparkSession).gatherInformation(new Path("/home/skalogerakis/TUC_Projects/SparkTest/Checkpoint/"))
+
     MonitorListener(sparkSession)
+
 
     //This hides too much log information and sets log level to error
     sparkSession.sparkContext.setLogLevel("ERROR")

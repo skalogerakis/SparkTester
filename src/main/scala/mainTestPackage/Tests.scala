@@ -1,20 +1,30 @@
 package mainTestPackage
 
+import net.heartsavior.spark.sql.state.StateInformationInCheckpoint
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.{OutputMode, StreamingQueryListener, Trigger}
-import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructType, TimestampType}
+import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructField, StructType, TimestampType}
+import org.apache.spark.sql.execution.streaming.state
+import org.apache.spark.sql.execution.streaming.state.StateStoreId
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.StreamingQueryListener.{QueryProgressEvent, QueryStartedEvent, QueryTerminatedEvent}
 
-object complexWF {
+
+
+
+object Tests {
   //This is how main class is defined in scala
   def main(args: Array[String]): Unit = {
     //This is how structured streaming starts, by building a spark session
     val sparkSession = SparkSession.builder().appName("Spark Structured Streaming").master("local[*]").getOrCreate()
 
+    val stateInfo = new StateInformationInCheckpoint(sparkSession).gatherInformation(new Path("/home/skalogerakis/TUC_Projects/SparkTest/CheckpointCount/"))
+
+    //sparkSession.conf.set("spark.sql.streaming.metricsEnabled", "true")
+
     //This hides too much log information and sets log level to error
     sparkSession.sparkContext.setLogLevel("ERROR")
-
 
     MonitorListener(sparkSession)
 
@@ -39,40 +49,12 @@ object complexWF {
       .option("maxFilesPerTrigger","1")  // This option simply makes spark to read up to 2 files per batch
       .csv("/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData")  //Specify directory of file to read
 
-    //Aggregation Example
-    val aggrTest = streamingData
-      .filter("Quantity > 10")
-      .groupBy("InvoiceDate", "Country")
-      .agg(avg("UnitPrice"))
-
-    aggrTest.explain(true)
-
-
-    /**
-     * Whenever there is checkpoint directory attached to the query, spark goes through the content of the
-     * directory before it accepts new data. This makes sure that spark revovers the old state before it starts
-     * processing new data. So whenever there is restart, spark first recovers the old state and then start processing new data from the stream.
-     */
-    val aggrQuery = aggrTest.writeStream
-      .format("console")
-      .outputMode("complete")
-      .option("checkpointLocation", "/home/skalogerakis/TUC_Projects/SparkTest/Checkpoint/")
-      //.trigger(Trigger.Once)
-      .queryName("AggrExample")
-      .start()
-
-    aggrQuery.explain(true)
-
-//    println(aggrQuery.lastProgress)
-
-
     //Count example
     val countTest = streamingData
       .groupBy("Country")
       .count()
 
     countTest.explain(true)
-
 
     val countQuery = countTest.writeStream
       .format("console")
@@ -81,17 +63,10 @@ object complexWF {
       .queryName("CountExample")
       .start()
 
-    //println(countQuery.lastProgress)
-
-    countQuery.explain(true)
-
-
-    aggrQuery.awaitTermination()
+    countQuery.status
     countQuery.awaitTermination()
 
-
   }
-
 
   //Function for advanced and more detailed monitoring
   def MonitorListener(sparkSession: SparkSession) : Unit = {

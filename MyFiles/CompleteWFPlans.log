@@ -1,0 +1,56 @@
+== Parsed Logical Plan ==
+'Aggregate [InvoiceDate#5, Country#8], [InvoiceDate#5, Country#8, avg('UnitPrice) AS avg(UnitPrice)#31]
++- Filter (Quantity#4 > 10)
+   +- StreamingRelation DataSource(org.apache.spark.sql.SparkSession@105db94d,csv,List(),Some(StructType(StructField(Id,IntegerType,true), StructField(InvoiceNo,IntegerType,true), StructField(StockCode,IntegerType,true), StructField(Description,StringType,true), StructField(Quantity,IntegerType,true), StructField(InvoiceDate,DateType,true), StructField(UnitPrice,DoubleType,true), StructField(CustomerId,IntegerType,true), StructField(Country,StringType,true), StructField(InvoiceTimestamp,TimestampType,true))),List(),None,Map(maxFilesPerTrigger -> 1, path -> /home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData),None), FileSource[/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData], [Id#0, InvoiceNo#1, StockCode#2, Description#3, Quantity#4, InvoiceDate#5, UnitPrice#6, CustomerId#7, Country#8, InvoiceTimestamp#9]
+
+== Analyzed Logical Plan ==
+InvoiceDate: date, Country: string, avg(UnitPrice): double
+Aggregate [InvoiceDate#5, Country#8], [InvoiceDate#5, Country#8, avg(UnitPrice#6) AS avg(UnitPrice)#31]
++- Filter (Quantity#4 > 10)
+   +- StreamingRelation DataSource(org.apache.spark.sql.SparkSession@105db94d,csv,List(),Some(StructType(StructField(Id,IntegerType,true), StructField(InvoiceNo,IntegerType,true), StructField(StockCode,IntegerType,true), StructField(Description,StringType,true), StructField(Quantity,IntegerType,true), StructField(InvoiceDate,DateType,true), StructField(UnitPrice,DoubleType,true), StructField(CustomerId,IntegerType,true), StructField(Country,StringType,true), StructField(InvoiceTimestamp,TimestampType,true))),List(),None,Map(maxFilesPerTrigger -> 1, path -> /home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData),None), FileSource[/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData], [Id#0, InvoiceNo#1, StockCode#2, Description#3, Quantity#4, InvoiceDate#5, UnitPrice#6, CustomerId#7, Country#8, InvoiceTimestamp#9]
+
+== Optimized Logical Plan ==
+Aggregate [InvoiceDate#5, Country#8], [InvoiceDate#5, Country#8, avg(UnitPrice#6) AS avg(UnitPrice)#31]
++- Project [InvoiceDate#5, UnitPrice#6, Country#8]
+   +- Filter (isnotnull(Quantity#4) AND (Quantity#4 > 10))
+      +- StreamingRelation DataSource(org.apache.spark.sql.SparkSession@105db94d,csv,List(),Some(StructType(StructField(Id,IntegerType,true), StructField(InvoiceNo,IntegerType,true), StructField(StockCode,IntegerType,true), StructField(Description,StringType,true), StructField(Quantity,IntegerType,true), StructField(InvoiceDate,DateType,true), StructField(UnitPrice,DoubleType,true), StructField(CustomerId,IntegerType,true), StructField(Country,StringType,true), StructField(InvoiceTimestamp,TimestampType,true))),List(),None,Map(maxFilesPerTrigger -> 1, path -> /home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData),None), FileSource[/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData], [Id#0, InvoiceNo#1, StockCode#2, Description#3, Quantity#4, InvoiceDate#5, UnitPrice#6, CustomerId#7, Country#8, InvoiceTimestamp#9]
+
+== Physical Plan ==
+*(4) HashAggregate(keys=[InvoiceDate#5, Country#8], functions=[avg(UnitPrice#6)], output=[InvoiceDate#5, Country#8, avg(UnitPrice)#31])
++- StateStoreSave [InvoiceDate#5, Country#8], state info [ checkpoint = <unknown>, runId = 3e7cf7d9-4255-4f64-8f9a-c9d5095f25ea, opId = 0, ver = 0, numPartitions = 200], Append, 0, 2
+   +- *(3) HashAggregate(keys=[InvoiceDate#5, Country#8], functions=[merge_avg(UnitPrice#6)], output=[InvoiceDate#5, Country#8, sum#37, count#38L])
+      +- StateStoreRestore [InvoiceDate#5, Country#8], state info [ checkpoint = <unknown>, runId = 3e7cf7d9-4255-4f64-8f9a-c9d5095f25ea, opId = 0, ver = 0, numPartitions = 200], 2
+         +- *(2) HashAggregate(keys=[InvoiceDate#5, Country#8], functions=[merge_avg(UnitPrice#6)], output=[InvoiceDate#5, Country#8, sum#37, count#38L])
+            +- Exchange hashpartitioning(InvoiceDate#5, Country#8, 200), true, [id=#45]
+               +- *(1) HashAggregate(keys=[InvoiceDate#5, Country#8], functions=[partial_avg(UnitPrice#6)], output=[InvoiceDate#5, Country#8, sum#37, count#38L])
+                  +- *(1) Project [InvoiceDate#5, UnitPrice#6, Country#8]
+                     +- *(1) Filter (isnotnull(Quantity#4) AND (Quantity#4 > 10))
+                        +- StreamingRelation FileSource[/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData], [Id#0, InvoiceNo#1, StockCode#2, Description#3, Quantity#4, InvoiceDate#5, UnitPrice#6, CustomerId#7, Country#8, InvoiceTimestamp#9]
+
+Query started: b4a8e7e7-a27f-4639-aeaf-e92d47a0eb35
+== Parsed Logical Plan ==
+Aggregate [Country#8], [Country#8, count(1) AS count#53L]
++- StreamingRelation DataSource(org.apache.spark.sql.SparkSession@105db94d,csv,List(),Some(StructType(StructField(Id,IntegerType,true), StructField(InvoiceNo,IntegerType,true), StructField(StockCode,IntegerType,true), StructField(Description,StringType,true), StructField(Quantity,IntegerType,true), StructField(InvoiceDate,DateType,true), StructField(UnitPrice,DoubleType,true), StructField(CustomerId,IntegerType,true), StructField(Country,StringType,true), StructField(InvoiceTimestamp,TimestampType,true))),List(),None,Map(maxFilesPerTrigger -> 1, path -> /home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData),None), FileSource[/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData], [Id#0, InvoiceNo#1, StockCode#2, Description#3, Quantity#4, InvoiceDate#5, UnitPrice#6, CustomerId#7, Country#8, InvoiceTimestamp#9]
+
+== Analyzed Logical Plan ==
+Country: string, count: bigint
+Aggregate [Country#8], [Country#8, count(1) AS count#53L]
++- StreamingRelation DataSource(org.apache.spark.sql.SparkSession@105db94d,csv,List(),Some(StructType(StructField(Id,IntegerType,true), StructField(InvoiceNo,IntegerType,true), StructField(StockCode,IntegerType,true), StructField(Description,StringType,true), StructField(Quantity,IntegerType,true), StructField(InvoiceDate,DateType,true), StructField(UnitPrice,DoubleType,true), StructField(CustomerId,IntegerType,true), StructField(Country,StringType,true), StructField(InvoiceTimestamp,TimestampType,true))),List(),None,Map(maxFilesPerTrigger -> 1, path -> /home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData),None), FileSource[/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData], [Id#0, InvoiceNo#1, StockCode#2, Description#3, Quantity#4, InvoiceDate#5, UnitPrice#6, CustomerId#7, Country#8, InvoiceTimestamp#9]
+
+== Optimized Logical Plan ==
+Aggregate [Country#8], [Country#8, count(1) AS count#53L]
++- Project [Country#8]
+   +- StreamingRelation DataSource(org.apache.spark.sql.SparkSession@105db94d,csv,List(),Some(StructType(StructField(Id,IntegerType,true), StructField(InvoiceNo,IntegerType,true), StructField(StockCode,IntegerType,true), StructField(Description,StringType,true), StructField(Quantity,IntegerType,true), StructField(InvoiceDate,DateType,true), StructField(UnitPrice,DoubleType,true), StructField(CustomerId,IntegerType,true), StructField(Country,StringType,true), StructField(InvoiceTimestamp,TimestampType,true))),List(),None,Map(maxFilesPerTrigger -> 1, path -> /home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData),None), FileSource[/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData], [Id#0, InvoiceNo#1, StockCode#2, Description#3, Quantity#4, InvoiceDate#5, UnitPrice#6, CustomerId#7, Country#8, InvoiceTimestamp#9]
+
+== Physical Plan ==
+*(4) HashAggregate(keys=[Country#8], functions=[count(1)], output=[Country#8, count#53L])
++- StateStoreSave [Country#8], state info [ checkpoint = <unknown>, runId = 6c2e03b7-45e1-4d92-aa2c-b740524f3e4c, opId = 0, ver = 0, numPartitions = 200], Append, 0, 2
+   +- *(3) HashAggregate(keys=[Country#8], functions=[merge_count(1)], output=[Country#8, count#57L])
+      +- StateStoreRestore [Country#8], state info [ checkpoint = <unknown>, runId = 6c2e03b7-45e1-4d92-aa2c-b740524f3e4c, opId = 0, ver = 0, numPartitions = 200], 2
+         +- *(2) HashAggregate(keys=[Country#8], functions=[merge_count(1)], output=[Country#8, count#57L])
+            +- Exchange hashpartitioning(Country#8, 200), true, [id=#97]
+               +- *(1) HashAggregate(keys=[Country#8], functions=[partial_count(1)], output=[Country#8, count#57L])
+                  +- *(1) Project [Country#8]
+                     +- StreamingRelation FileSource[/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData], [Id#0, InvoiceNo#1, StockCode#2, Description#3, Quantity#4, InvoiceDate#5, UnitPrice#6, CustomerId#7, Country#8, InvoiceTimestamp#9]
+
+Query started: 70dad27d-b8dc-480d-b885-b2e5e56ff2c7
