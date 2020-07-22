@@ -39,13 +39,26 @@ object complexWF {
       .option("maxFilesPerTrigger","1")  // This option simply makes spark to read up to 2 files per batch
       .csv("/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData")  //Specify directory of file to read
 
+    //Sum test
+    val sumTest = streamingData
+      .select("InvoiceNo", "StockCode","Quantity")
+      .groupBy("InvoiceNo")
+      .sum("Quantity")
+
+    val sumQuery = sumTest.writeStream
+      .format("console")
+      .outputMode("complete")
+      .option("checkpointLocation", "/home/skalogerakis/TUC_Projects/SparkTest/CheckpointSum/")
+      .queryName("SumExample")
+      .start()
+
     //Aggregation Example
     val aggrTest = streamingData
       .filter("Quantity > 10")
       .groupBy("InvoiceDate", "Country")
       .agg(avg("UnitPrice"))
 
-    aggrTest.explain(true)
+//    aggrTest.explain(true)
 
 
     /**
@@ -56,12 +69,12 @@ object complexWF {
     val aggrQuery = aggrTest.writeStream
       .format("console")
       .outputMode("complete")
-      .option("checkpointLocation", "/home/skalogerakis/TUC_Projects/SparkTest/Checkpoint/")
+      .option("checkpointLocation", "/home/skalogerakis/TUC_Projects/SparkTest/CheckpointAggr/")
       //.trigger(Trigger.Once)
       .queryName("AggrExample")
       .start()
 
-    aggrQuery.explain(true)
+//    aggrQuery.explain(true)
 
 //    println(aggrQuery.lastProgress)
 
@@ -71,7 +84,7 @@ object complexWF {
       .groupBy("Country")
       .count()
 
-    countTest.explain(true)
+    //countTest.explain(true)
 
 
     val countQuery = countTest.writeStream
@@ -83,11 +96,12 @@ object complexWF {
 
     //println(countQuery.lastProgress)
 
-    countQuery.explain(true)
+//    countQuery.explain(true)
 
 
     aggrQuery.awaitTermination()
     countQuery.awaitTermination()
+    sumQuery.awaitTermination()
 
 
   }

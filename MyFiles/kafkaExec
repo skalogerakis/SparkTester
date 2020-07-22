@@ -1,0 +1,46 @@
+#!/bin/sh
+#/home/skalogerakis/kafka_2.12-2.4.0
+
+# kafka=$1
+
+kafka="/home/skalogerakis/kafka_2.12-2.4.0"
+fileinput="/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData/2010-12-01.csv"
+
+#Works in gnome-terminal
+#First start zookeeper server
+gnome-terminal -- bash -c "${kafka}/bin/zookeeper-server-start.sh ${kafka}/config/zookeeper.properties;exec bash"
+
+sleep 2
+
+#Then start kafka server
+gnome-terminal -- bash -c "${kafka}/bin/kafka-server-start.sh ${kafka}/config/server.properties;exec bash"
+
+sleep 10
+
+#We don't need to create new topic here
+#Create new topic with name csvtokafka in localhost:9092
+gnome-terminal -- bash -c "${kafka}/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic input;exec bash"
+
+gnome-terminal -- bash -c "${kafka}/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic input < ${fileinput};exec bash"
+
+
+
+sleep 10
+
+#Open and view messages in a new terminal
+gnome-terminal -- bash -c "${kafka}/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic input --from-beginning;exec bash"
+
+
+# gnome-terminal -- bash -c "${kafka}/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic _input-topic-job1 --from-beginning;exec bash"
+
+
+# gnome-terminal -- bash -c "${kafka}/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic output-topic-job1 --from-beginning;exec bash"
+
+
+# gnome-terminal -- bash -c "${kafka}/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic output-topic-job2 --from-beginning;exec bash"
+
+#Command to delete topics
+#/home/skalogerakis/kafka_2.12-2.4.0/bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic input
+
+#Command to list topics
+#${kafka}/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
