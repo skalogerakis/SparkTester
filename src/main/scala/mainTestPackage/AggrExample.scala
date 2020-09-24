@@ -2,7 +2,7 @@ package mainTestPackage
 
 import net.heartsavior.spark.sql.state.StateInformationInCheckpoint
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SparkSession, functions}
 import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery, StreamingQueryListener, Trigger}
 import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructType, TimestampType}
 import org.apache.spark.sql.functions._
@@ -43,11 +43,30 @@ object AggrExample {
       .option("maxFilesPerTrigger","1")  // This option simply makes spark to read up to 2 files per batch
       .csv("/home/skalogerakis/TUC_Projects/SparkTest/MyFiles/TestData")  //Specify directory of file to read
 
-    //Aggregation Example
+    //Initial effort
     val aggrTest = streamingData
-      .filter("Quantity > 10")
-      .groupBy("InvoiceDate", "Country")
-      .agg(avg("UnitPrice"))
+        .filter("Quantity > 10")
+        .groupBy("InvoiceDate", "Country")
+        .agg(avg("UnitPrice"))
+
+    val aggrQuery :StreamingQuery = aggrTest.writeStream
+//      .format("console")
+      .outputMode("complete")
+      .option("checkpointLocation", "/home/skalogerakis/TUC_Projects/SparkTest/Checkpoint/")
+      .queryName("AggrExample")
+      .start()
+
+
+
+
+    //Aggregation Example
+//    val aggrTest = streamingData
+//      .withColumn("processing_time", functions.current_timestamp)
+//      .withWatermark("processing_time", "0 seconds")
+//      .groupBy(functions.window(functions.col("processing_time"), "50 seconds"), functions.col("InvoiceDate"))
+////      .filter("Quantity > 10")
+////      .groupBy("InvoiceDate", "Country")
+//      .agg(avg("UnitPrice"))
 
 
     /**
@@ -55,17 +74,25 @@ object AggrExample {
      * directory before it accepts new data. This makes sure that spark revovers the old state before it starts
      * processing new data. So whenever there is restart, spark first recovers the old state and then start processing new data from the stream.
      */
-    val aggrQuery :StreamingQuery = aggrTest.writeStream
-      .format("console")
-      .outputMode("complete")
-      .option("checkpointLocation", "/home/skalogerakis/TUC_Projects/SparkTest/Checkpoint/")
-      //.trigger(Trigger.Once)
-      .queryName("AggrExample")
-      .start()
 
-    //println(aggrQuery.lastProgress)
+//    val aggrQuery :StreamingQuery = aggrTest.writeStream
+//      .format("console")
+//      .outputMode("append")
+////  .option("path","/home/skalogerakis/TUC_Projects/SparkTest/CheckpointResult/")
+//      .option("checkpointLocation", "/home/skalogerakis/TUC_Projects/SparkTest/Checkpoint/")
+////      .option("checkpointLocation", "hdfs://45.10.26.123:9000/apps/Logs")
+////      .option("path", "hdfs://45.10.26.123:9000/apps/Result")
+//
+//      //.trigger(Trigger.Once)
+////      .format("memory")
+//      .queryName("AggrExample")
+//      .start()
 
 
+//    println(aggrQuery.lastProgress)
+
+
+    //We need that for sure
     aggrQuery.awaitTermination()
 
   }
