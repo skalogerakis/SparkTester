@@ -1,0 +1,7 @@
+- Definitely need in the end <queryName>.awaitTermination. If missing workflow does not seem to execute at all.
+
+- If we do not put <queryName>.awaitTermination in the end but in the middle it will wait forever and not procceed to further things.
+
+- ?In writeStream we must specify format("console") or format("memory") otherwise requires path(output file) 
+
+- It seems like I cannot write anything in file using just my initial approach, as append mode which is supported a watermark must be added. So print everything in console for now.
